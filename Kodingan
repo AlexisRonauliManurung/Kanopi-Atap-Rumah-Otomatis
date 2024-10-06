@@ -1,0 +1,69 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+#include <Servo.h>
+
+// Inisialisasi LCD I2C dengan alamat 0x27 dan ukuran 16x2
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+// Inisialisasi objek servo
+Servo myServo;
+
+// Pin definisi
+const int ldrPin = A1;     // LDR
+const int servoPin = 3;    // Servo
+#define RAIN_PIN A0        // Rain
+
+void setup() {
+  // Inisialisasi LCD
+  lcd.begin(16, 2);
+  lcd.backlight();
+  lcd.init();
+
+  // Inisialisasi servo
+  myServo.attach(servoPin);
+
+  // Setup pesan awal di LCD
+  lcd.setCursor(0, 0);
+  lcd.print("Rain Detection");
+  lcd.setCursor(0, 1);
+  lcd.print("System Ready");
+  delay(2000);
+  lcd.clear();
+}
+
+void loop() {
+  // Baca Raindrop Sensor
+  int rain_state = analogRead(RAIN_PIN);
+
+  // Baca nilai dari LDR
+  int ldrValue = analogRead(ldrPin);
+
+  // Konversi nilai potensiometer ke rentang tegangan
+  int brightness = map(ldrValue, 0, 1023, 0, 255);
+
+  // Tampilkan nilai potensiometer dan LDR di LCD
+  lcd.setCursor(0, 0);
+  lcd.print("State: ");
+  lcd.print(rain_state);
+
+  lcd.setCursor(0, 1);
+  lcd.print("LDR: ");
+  lcd.print(brightness);
+  lcd.print(" ");
+
+  // Cek apakah "hujan" berdasarkan nilai potensiometer
+  if (rain_state < 800 || brightness > 200) {
+    // Jika hujan, tutup dengan menggerakkan servo
+    myServo.write(0);
+    lcd.setCursor(7, 0);
+    lcd.print("Rain");
+  } else {
+    // Jika tidak hujan, buka dengan menggerakkan servo
+    myServo.write(70); // Menggerakkan servo ke posisi 0 derajat
+    lcd.setCursor(7, 0);
+    lcd.print("Dry ");
+  }
+
+  // Tambahkan delay untuk stabilitas
+  delay(500);
+}
